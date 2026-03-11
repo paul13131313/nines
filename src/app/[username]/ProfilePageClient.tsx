@@ -90,6 +90,56 @@ export default function ProfilePageClient({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const loadImageAsBlob = async (url: string): Promise<HTMLImageElement> => {
+    // fetchでblob取得（CORS回避）→ Object URLで読み込み
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    return new Promise((resolve, reject) => {
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Image load failed"));
+      };
+      img.src = objectUrl;
+    });
+  };
+
+  const drawCover = (
+    ctx: CanvasRenderingContext2D,
+    img: HTMLImageElement,
+    x: number, y: number, size: number
+  ) => {
+    // object-fit: cover と同じ：中央をトリミングして正方形に収める
+    const imgW = img.naturalWidth;
+    const imgH = img.naturalHeight;
+    const scale = Math.max(size / imgW, size / imgH);
+    const sw = size / scale;
+    const sh = size / scale;
+    const sx = (imgW - sw) / 2;
+    const sy = (imgH - sh) / 2;
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, size, size);
+  };
+
+  const drawEmptyCell = (
+    ctx: CanvasRenderingContext2D,
+    x: number, y: number, size: number, label: string
+  ) => {
+    ctx.fillStyle = "#1a1a1a";
+    ctx.beginPath();
+    ctx.roundRect(x, y, size, size, 10);
+    ctx.fill();
+    ctx.fillStyle = "#333";
+    ctx.font = "24px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, x + size / 2, y + size / 2);
+  };
+
   const handleDownloadImage = async () => {
     const sortedCells = Array.from({ length: 9 }, (_, i) =>
       cells.find((c) => c.position === i) || null
@@ -115,35 +165,19 @@ export default function ProfilePageClient({
       const cell = sortedCells[i];
       if (cell?.thumbnail_url) {
         try {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.src = cell.thumbnail_url;
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject();
-          });
-          ctx.drawImage(img, x, y, size, size);
-        } catch {
-          ctx.fillStyle = "#1a1a1a";
+          const img = await loadImageAsBlob(cell.thumbnail_url);
+          // 角丸クリップ
+          ctx.save();
           ctx.beginPath();
           ctx.roundRect(x, y, size, size, 10);
-          ctx.fill();
-          ctx.fillStyle = "#333";
-          ctx.font = "24px sans-serif";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(String(i + 1), x + size / 2, y + size / 2);
+          ctx.clip();
+          drawCover(ctx, img, x, y, size);
+          ctx.restore();
+        } catch {
+          drawEmptyCell(ctx, x, y, size, String(i + 1));
         }
       } else {
-        ctx.fillStyle = "#1a1a1a";
-        ctx.beginPath();
-        ctx.roundRect(x, y, size, size, 10);
-        ctx.fill();
-        ctx.fillStyle = "#333";
-        ctx.font = "24px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(String(i + 1), x + size / 2, y + size / 2);
+        drawEmptyCell(ctx, x, y, size, String(i + 1));
       }
     }
 
