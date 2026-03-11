@@ -1,0 +1,211 @@
+"use client";
+
+import { useState } from "react";
+import { createClient } from "@/lib/supabase-browser";
+import { useRouter } from "next/navigation";
+
+export default function AuthPage() {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    if (isSignUp) {
+      if (!username.trim()) {
+        setError("ユーザーネームを入力してください");
+        setLoading(false);
+        return;
+      }
+
+      // ユーザーネーム重複チェック
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username.trim().toLowerCase())
+        .single();
+
+      if (existing) {
+        setError("このユーザーネームは既に使われています");
+        setLoading(false);
+        return;
+      }
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: data.user.id,
+            username: username.trim().toLowerCase(),
+            display_name: username.trim(),
+          });
+
+        if (profileError) {
+          setError(profileError.message);
+          setLoading(false);
+          return;
+        }
+
+        router.push(`/${username.trim().toLowerCase()}`);
+      }
+    } else {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setError(signInError.message);
+        setLoading(false);
+        return;
+      }
+
+      // プロフィールからユーザーネームを取得してリダイレクト
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+
+        if (profile) {
+          router.push(`/${profile.username}`);
+        } else {
+          router.push("/");
+        }
+      }
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-dvh flex items-center justify-center px-4"
+      style={{ background: "#DBD6CD" }}>
+      <div className="w-full max-w-sm">
+        {/* 方眼紙テクスチャ風の装飾線 */}
+        <div className="text-center mb-8">
+          <h1 className="text-5xl tracking-tight mb-2"
+            style={{ fontFamily: "'Playfair Display', serif", color: "#262626" }}>
+            nines
+          </h1>
+          <p className="text-sm tracking-widest uppercase"
+            style={{ fontFamily: "'Noto Sans JP', sans-serif", color: "#262626", opacity: 0.6 }}>
+            {isSignUp ? "Create Account" : "Sign In"}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && (
+            <div>
+              <label className="block text-xs tracking-widest uppercase mb-1.5"
+                style={{ color: "#262626", opacity: 0.6 }}>
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 rounded-full text-sm outline-none"
+                style={{
+                  background: "#FFFFFF",
+                  border: "1px solid #262626",
+                  color: "#262626",
+                  fontFamily: "'Noto Sans JP', sans-serif",
+                }}
+                placeholder="your_name"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs tracking-widest uppercase mb-1.5"
+              style={{ color: "#262626", opacity: 0.6 }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 rounded-full text-sm outline-none"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #262626",
+                color: "#262626",
+                fontFamily: "'Noto Sans JP', sans-serif",
+              }}
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs tracking-widest uppercase mb-1.5"
+              style={{ color: "#262626", opacity: 0.6 }}>
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-full text-sm outline-none"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #262626",
+                color: "#262626",
+                fontFamily: "'Noto Sans JP', sans-serif",
+              }}
+              placeholder="••••••••"
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm" style={{ color: "#D73C3C" }}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 rounded-full text-sm font-medium tracking-widest uppercase transition-opacity disabled:opacity-50"
+            style={{
+              background: "#262626",
+              color: "#FFFFFF",
+              fontFamily: "'Noto Sans JP', sans-serif",
+            }}
+          >
+            {loading ? "..." : isSignUp ? "Sign Up" : "Sign In"}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
+            className="text-sm underline underline-offset-4"
+            style={{ color: "#262626", opacity: 0.6 }}
+          >
+            {isSignUp ? "アカウントをお持ちの方はこちら" : "新規登録はこちら"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

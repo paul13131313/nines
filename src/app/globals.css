@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #DBD6CD;
+  --primary: #262626;
+  --secondary: #DBD6CD;
+  --accent: #D73C3C;
+  --text: #262626;
+  --text-on-primary: #FFFFFF;
+  --card: #FFFFFF;
+  --border: #C8C3BA;
+  --grid-line: rgba(38, 38, 38, 0.08);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+/* 方眼紙テクスチャ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* セリフ見出し */
+.font-display {
+  font-family: "Playfair Display", "Times New Roman", serif;
+}
+
+/* ピル型ボタン */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 28px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+}
+
+.btn-pill:hover {
+  opacity: 0.85;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--text-on-primary);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--text-on-primary);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+/* サークルクロップ（写真を丸く切り抜き） */
+.circle-crop {
+  border-radius: 50%;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+/* 9マスグリッド */
+.nine-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.nine-cell {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(38, 38, 38, 0.06);
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.nine-cell:hover {
+  transform: scale(1.02);
+}
+
+.nine-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* モーダル背景 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(38, 38, 38, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+  }
+}
+
+.modal-content {
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85dvh;
+  overflow-y: auto;
+  padding: 24px;
+  position: relative;
+  z-index: 51;
+}
+
+@media (min-width: 640px) {
+  .modal-content {
+    border-radius: 20px;
+  }
+}
+
+/* マッチバッジ */
+.match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--accent);
+  color: var(--text-on-primary);
+}
+
+/* スクロールバーを細く */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
