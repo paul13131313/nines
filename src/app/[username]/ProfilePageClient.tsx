@@ -123,8 +123,9 @@ export default function ProfilePageClient({
   };
 
   const loadImageAsBlob = async (url: string): Promise<HTMLImageElement> => {
-    // fetchでblob取得（CORS回避）→ Object URLで読み込み
-    const res = await fetch(url);
+    // サーバーサイドプロキシ経由で画像取得（CORS完全回避）
+    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
     const img = new Image();
