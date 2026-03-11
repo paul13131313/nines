@@ -48,8 +48,40 @@ export default function ProfilePageClient({
   const supabase = createClient();
 
   const shareUrl = `https://nines-seven.vercel.app/${profile.username}`;
-  const shareText = `私のnines — 好きなコンテンツ9選`;
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+
+  // 9マスのタイトルを最大3つ取得（プレビューテキスト用）
+  const previewTitles = cells
+    .filter((c) => c.content_title)
+    .slice(0, 3)
+    .map((c) => c.content_title)
+    .join(" / ");
+
+  // X投稿テキスト（ハッシュタグ・URLなし）
+  const xMainText = `自分のninesをつくった。\n${previewTitles}...\n好きなもの9つ並べるだけなのに、意外と自分がわかる。`;
+
+  // Xリプライテキスト（URLはこちらに）
+  const xReplyText = `${shareUrl}\nあなたのninesもつくってみて`;
+
+  // Xシェア：本文投稿（URLなし）
+  const handleXShare = () => {
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(xMainText)}`;
+    window.open(tweetUrl, "_blank");
+
+    // 3秒後にリプライ用URLをクリップボードにコピー＋案内表示
+    setTimeout(() => {
+      navigator.clipboard.writeText(xReplyText);
+      alert(
+        "投稿できたら、リプライ欄に貼り付けてください👇\n（URLをコピーしました）\n\n" +
+          xReplyText
+      );
+    }, 3000);
+  };
+
+  // LINEシェア
+  const handleLineShare = () => {
+    const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`;
+    window.open(lineUrl, "_blank");
+  };
 
   const handleFollow = async () => {
     if (!currentUserId) return;
@@ -254,31 +286,43 @@ export default function ProfilePageClient({
 
       {/* シェアボタン */}
       {cells.length > 0 && (
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <a
-            href={twitterUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-pill text-xs py-2 px-5"
-            style={{
-              background: "var(--primary)",
-              color: "var(--text-on-primary)",
-            }}
+        <div className="mt-6">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <button
+              onClick={handleXShare}
+              className="btn-pill text-xs py-2 px-5"
+              style={{ background: "#000", color: "#fff" }}
+            >
+              𝕏 投稿する
+            </button>
+            <button
+              onClick={handleLineShare}
+              className="btn-pill text-xs py-2 px-5"
+              style={{ background: "#06C755", color: "#fff" }}
+            >
+              LINE
+            </button>
+            <button
+              onClick={handleCopyUrl}
+              className="btn-pill btn-outline text-xs py-2 px-5"
+            >
+              {copied ? "コピーしました!" : "📋 URLコピー"}
+            </button>
+            <button
+              onClick={handleDownloadImage}
+              className="btn-pill btn-outline text-xs py-2 px-5"
+            >
+              ↓ 画像保存
+            </button>
+          </div>
+          <p
+            className="text-center mt-2"
+            style={{ fontSize: "11px", color: "var(--primary)", opacity: 0.35 }}
           >
-            Xでシェア
-          </a>
-          <button
-            onClick={handleCopyUrl}
-            className="btn-pill btn-outline text-xs py-2 px-5"
-          >
-            {copied ? "コピーしました!" : "URLをコピー"}
-          </button>
-          <button
-            onClick={handleDownloadImage}
-            className="btn-pill btn-outline text-xs py-2 px-5"
-          >
-            画像を保存
-          </button>
+            ※ Xはリンクなし投稿の方が多くの人に届きます。
+            <br />
+            投稿後、リプライにURLを貼るとさらに効果的。
+          </p>
         </div>
       )}
 
