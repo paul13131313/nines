@@ -79,11 +79,11 @@ export default function Header() {
         <nav className="flex items-center gap-3">
           {profile && (
             <Link
-              href="/timeline"
+              href="/"
               className="text-xs tracking-widest uppercase relative"
               style={{ color: "var(--primary)", opacity: 0.6 }}
             >
-              Timeline
+              Home
             </Link>
           )}
 

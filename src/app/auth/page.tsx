@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
@@ -11,8 +11,22 @@ export default function AuthPage() {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
   const supabase = createClient();
+
+  // ログイン済みなら / にリダイレクト
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        router.replace("/");
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +99,14 @@ export default function AuthPage() {
 
     setLoading(false);
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center" style={{ background: "#DBD6CD" }}>
+        <p className="text-sm" style={{ color: "#262626", opacity: 0.4 }}>...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh flex items-center justify-center px-4"

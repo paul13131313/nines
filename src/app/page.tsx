@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import Header from "@/components/Header";
 import NineGrid from "@/components/NineGrid";
+import HomeLoggedIn from "@/app/HomeLoggedIn";
 import { NineCell, Profile } from "@/types";
 
 async function getRecentUsers(): Promise<{ profile: Profile; cells: NineCell[] }[]> {
@@ -28,6 +29,92 @@ async function getRecentUsers(): Promise<{ profile: Profile; cells: NineCell[] }
 }
 
 export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // ログイン済み → ホーム画面
+  if (user) {
+    // 自分のプロフィール + セル
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    const { data: myCells } = await supabase
+      .from("nine_cells")
+      .select("*")
+      .eq("user_id", user.id);
+
+    const myTitles = (myCells || []).map((c: NineCell) => c.content_title.toLowerCase());
+
+    // フォロー中ユーザー取得
+    const { data: follows } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", user.id);
+
+    const followingIds = (follows || []).map((f: { following_id: string }) => f.following_id);
+
+    let followingUsers: { profile: Profile; cells: NineCell[]; matchCount: number }[] = [];
+
+    if (followingIds.length > 0) {
+      const { data: fProfiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", followingIds);
+
+      const { data: fCells } = await supabase
+        .from("nine_cells")
+        .select("*")
+        .in("user_id", followingIds);
+
+      followingUsers = (fProfiles || []).map((profile: Profile) => {
+        const cells = (fCells || []).filter((c: NineCell) => c.user_id === profile.id);
+        const theirTitles = cells.map((c: NineCell) => c.content_title.toLowerCase());
+        const matchCount = myTitles.filter((t) => theirTitles.includes(t)).length;
+        return { profile, cells, matchCount };
+      });
+      followingUsers.sort((a, b) => b.matchCount - a.matchCount);
+    }
+
+    // みんなのnines（自分とフォロー中を除外）
+    const excludeIds = [user.id, ...followingIds];
+    const { data: everyoneProfiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .not("id", "in", `(${excludeIds.join(",")})`)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    let everyoneUsers: { profile: Profile; cells: NineCell[]; matchCount: number }[] = [];
+
+    if (everyoneProfiles && everyoneProfiles.length > 0) {
+      const everyoneIds = everyoneProfiles.map((p: Profile) => p.id);
+      const { data: eCells } = await supabase
+        .from("nine_cells")
+        .select("*")
+        .in("user_id", everyoneIds);
+
+      everyoneUsers = everyoneProfiles.map((profile: Profile) => {
+        const cells = (eCells || []).filter((c: NineCell) => c.user_id === profile.id);
+        const theirTitles = cells.map((c: NineCell) => c.content_title.toLowerCase());
+        const matchCount = myTitles.filter((t) => theirTitles.includes(t)).length;
+        return { profile, cells, matchCount };
+      });
+    }
+
+    return (
+      <HomeLoggedIn
+        myProfile={myProfile}
+        myCells={myCells || []}
+        followingUsers={followingUsers}
+        everyoneUsers={everyoneUsers}
+      />
+    );
+  }
+
+  // 未ログイン → ランディングページ
   const recentUsers = await getRecentUsers();
 
   return (
