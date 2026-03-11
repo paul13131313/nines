@@ -57,6 +57,17 @@ export default function EditPage() {
     const existing = cells.find((c) => c.position === position);
 
     if (existing) {
+      // 履歴に保存（既存コンテンツが変わる場合のみ）
+      if (existing.content_title !== title) {
+        await supabase.from("nine_cells_history").insert({
+          user_id: profile.id,
+          position: existing.position,
+          content_title: existing.content_title,
+          content_type: existing.content_type,
+          thumbnail_url: existing.thumbnail_url,
+        });
+      }
+
       const { error } = await supabase
         .from("nine_cells")
         .update({
@@ -100,7 +111,16 @@ export default function EditPage() {
 
   const handleDeleteCell = async (position: number) => {
     const cell = cells.find((c) => c.position === position);
-    if (!cell) return;
+    if (!cell || !profile) return;
+
+    // 履歴に保存
+    await supabase.from("nine_cells_history").insert({
+      user_id: profile.id,
+      position: cell.position,
+      content_title: cell.content_title,
+      content_type: cell.content_type,
+      thumbnail_url: cell.thumbnail_url,
+    });
 
     const { error } = await supabase.from("nine_cells").delete().eq("id", cell.id);
     if (!error) {

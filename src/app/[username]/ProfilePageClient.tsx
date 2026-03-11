@@ -7,6 +7,14 @@ import NineGrid from "@/components/NineGrid";
 import { createClient } from "@/lib/supabase-browser";
 import { NineCell, Profile } from "@/types";
 
+interface HistoryItem {
+  id: string;
+  content_title: string;
+  content_type: string;
+  thumbnail_url: string | null;
+  replaced_at: string;
+}
+
 interface Props {
   profile: Profile;
   cells: NineCell[];
@@ -17,6 +25,7 @@ interface Props {
   isFollowing: boolean;
   followingCount: number;
   followerCount: number;
+  history: HistoryItem[];
 }
 
 export default function ProfilePageClient({
@@ -29,6 +38,7 @@ export default function ProfilePageClient({
   isFollowing: initialIsFollowing,
   followingCount,
   followerCount: initialFollowerCount,
+  history,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
@@ -264,6 +274,38 @@ export default function ProfilePageClient({
                   </span>
                 </div>
               ))}
+          </div>
+        </div>
+      )}
+
+      {/* 過去のnines */}
+      {history.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-xs tracking-widest uppercase mb-3" style={{ color: "var(--primary)", opacity: 0.4 }}>
+            Past Nines
+          </h3>
+          <div className="space-y-1.5">
+            {history.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 py-1.5 px-3 rounded-lg"
+                style={{ background: "rgba(255,255,255,0.25)" }}
+              >
+                {item.thumbnail_url && (
+                  <img
+                    src={item.thumbnail_url}
+                    alt=""
+                    className="w-8 h-8 rounded object-cover flex-shrink-0"
+                  />
+                )}
+                <span className="text-sm" style={{ color: "var(--primary)", opacity: 0.6 }}>
+                  {item.content_title}
+                </span>
+                <span className="text-xs ml-auto flex-shrink-0" style={{ color: "var(--primary)", opacity: 0.2 }}>
+                  {item.content_type}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}

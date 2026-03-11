@@ -93,6 +93,26 @@ export default async function UserProfilePage({ params }: Props) {
     .select("*", { count: "exact", head: true })
     .eq("following_id", profile.id);
 
+  // コンテンツ履歴取得
+  const { data: historyData } = await supabase
+    .from("nine_cells_history")
+    .select("*")
+    .eq("user_id", profile.id)
+    .order("replaced_at", { ascending: false })
+    .limit(30);
+
+  // 重複除去（同じタイトルは最新1件のみ）
+  const uniqueHistory = (historyData || []).filter(
+    (item: { content_title: string }, index: number, self: { content_title: string }[]) =>
+      index === self.findIndex((t) => t.content_title === item.content_title)
+  );
+
+  // 現在の9マスと重複するものは非表示
+  const currentTitles = (cells || []).map((c: NineCell) => c.content_title);
+  const filteredHistory = uniqueHistory.filter(
+    (h: { content_title: string }) => !currentTitles.includes(h.content_title)
+  );
+
   return (
     <>
       <Header />
@@ -106,6 +126,7 @@ export default async function UserProfilePage({ params }: Props) {
         isFollowing={isFollowing}
         followingCount={followingCount || 0}
         followerCount={followerCount || 0}
+        history={filteredHistory}
       />
     </>
   );
