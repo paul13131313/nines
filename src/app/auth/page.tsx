@@ -111,7 +111,7 @@ export default function AuthPage() {
           </h1>
           <p className="text-sm tracking-widest uppercase"
             style={{ fontFamily: "'Noto Sans JP', sans-serif", color: "#262626", opacity: 0.6 }}>
-            {isSignUp ? "Create Account" : "Sign In"}
+            {isSignUp ? "Create Account" : "Log In"}
           </p>
         </div>
 
@@ -192,7 +192,7 @@ export default function AuthPage() {
               fontFamily: "'Noto Sans JP', sans-serif",
             }}
           >
-            {loading ? "..." : isSignUp ? "Sign Up" : "Sign In"}
+            {loading ? "..." : isSignUp ? "Sign Up" : "Log In"}
           </button>
         </form>
 

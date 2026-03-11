@@ -73,7 +73,7 @@ export default function Header() {
             </div>
           ) : (
             <Link href="/auth" className="btn-pill btn-primary text-xs py-1.5 px-4">
-              Sign In
+              Log In
             </Link>
           )}
         </nav>

@@ -113,8 +113,14 @@ export default function SearchModal({ position, onSelect, onClose, initialTitle,
 
             {/* 検索結果 */}
             {loading ? (
-              <div className="text-center py-8" style={{ color: "var(--primary)", opacity: 0.4 }}>
-                検索中...
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div key={i}>
+                    <div className="aspect-[2/3] rounded-lg mb-1.5 animate-pulse" style={{ background: "var(--border)" }} />
+                    <div className="h-3 rounded animate-pulse mb-1" style={{ background: "var(--border)", width: "80%" }} />
+                    <div className="h-3 rounded animate-pulse" style={{ background: "var(--border)", width: "40%" }} />
+                  </div>
+                ))}
               </div>
             ) : results.length > 0 ? (
               <div className="grid grid-cols-3 gap-2 mb-4">
