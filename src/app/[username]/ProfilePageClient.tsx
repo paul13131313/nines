@@ -231,7 +231,7 @@ export default function ProfilePageClient({
               color: "var(--text-on-primary)",
             }}
           >
-            Xで<br />シェア
+            Xでシェア
           </a>
           <button
             onClick={handleCopyUrl}
