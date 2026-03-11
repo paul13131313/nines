@@ -26,47 +26,34 @@ export default function AuthPage() {
         return;
       }
 
-      // ユーザーネーム重複チェック
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username.trim().toLowerCase())
-        .single();
+      // サーバーサイドAPIでサインアップ（RLSバイパス）
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, username: username.trim() }),
+      });
 
-      if (existing) {
-        setError("このユーザーネームは既に使われています");
+      const result = await res.json();
+
+      if (!res.ok) {
+        setError(result.error);
         setLoading(false);
         return;
       }
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // 作成したユーザーでログイン
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signUpError) {
-        setError(signUpError.message);
+      if (signInError) {
+        setError(signInError.message);
         setLoading(false);
         return;
       }
 
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: data.user.id,
-            username: username.trim().toLowerCase(),
-            display_name: username.trim(),
-          });
-
-        if (profileError) {
-          setError(profileError.message);
-          setLoading(false);
-          return;
-        }
-
-        router.push(`/${username.trim().toLowerCase()}`);
-      }
+      router.push(`/${result.username}`);
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
