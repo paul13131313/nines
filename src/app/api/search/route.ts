@@ -66,6 +66,22 @@ async function searchGoogleBooks(query: string): Promise<SearchResult[]> {
     }));
 }
 
+async function searchMusic(query: string): Promise<SearchResult[]> {
+  const res = await fetch(
+    `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=album&limit=6`
+  );
+  const data = await res.json();
+
+  if (!data.results) return [];
+
+  return data.results.map((item: { collectionName: string; artworkUrl100: string; releaseDate: string; artistName: string }) => ({
+    title: `${item.collectionName} - ${item.artistName}`,
+    thumbnail_url: item.artworkUrl100?.replace("100x100", "300x300") || "",
+    type: "music",
+    year: item.releaseDate?.slice(0, 4) || "",
+  }));
+}
+
 async function searchRAWG(query: string): Promise<SearchResult[]> {
   const apiKey = process.env.RAWG_API_KEY;
   if (!apiKey) return [];
@@ -111,6 +127,9 @@ export async function GET(request: NextRequest) {
         break;
       case "game":
         results = await searchRAWG(q);
+        break;
+      case "music":
+        results = await searchMusic(q);
         break;
       default:
         results = await searchOMDB(q, "movie");

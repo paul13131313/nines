@@ -1,4 +1,4 @@
-export type ContentType = "movie" | "drama" | "manga" | "book" | "game" | "other";
+export type ContentType = "movie" | "drama" | "manga" | "book" | "game" | "music" | "other";
 
 export interface Profile {
   id: string;

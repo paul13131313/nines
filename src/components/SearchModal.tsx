@@ -9,6 +9,7 @@ const GENRES: { key: ContentType; label: string }[] = [
   { key: "manga", label: "マンガ" },
   { key: "book", label: "本" },
   { key: "game", label: "ゲーム" },
+  { key: "music", label: "音楽" },
   { key: "other", label: "その他" },
 ];
 

@@ -41,7 +41,7 @@ export default async function Home() {
             nines
           </h1>
           <p className="text-sm leading-relaxed mb-1" style={{ color: "var(--primary)", opacity: 0.6 }}>
-            映画、ドラマ、ゲーム、マンガ、小説。
+            映画、ドラマ、音楽、ゲーム、マンガ、小説。
           </p>
           <p className="text-sm leading-relaxed mb-8" style={{ color: "var(--primary)", opacity: 0.6 }}>
             好きなコンテンツを、9マスに。
