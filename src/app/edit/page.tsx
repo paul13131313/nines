@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase-browser";
 import Header from "@/components/Header";
 import NineGrid from "@/components/NineGrid";
 import SearchModal from "@/components/SearchModal";
+import AvatarUpload from "@/components/AvatarUpload";
 import { NineCell, ContentType, Profile } from "@/types";
 
 export default function EditPage() {
@@ -129,15 +130,15 @@ export default function EditPage() {
         {/* プロフィール表示 */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="circle-crop w-12 h-12" style={{ background: "var(--primary)" }}>
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-lg" style={{ color: "var(--text-on-primary)" }}>
-                  {profile?.username[0].toUpperCase()}
-                </div>
-              )}
-            </div>
+            {profile && (
+              <AvatarUpload
+                userId={profile.id}
+                username={profile.username}
+                currentAvatarUrl={profile.avatar_url}
+                size="md"
+                onUpload={(url) => setProfile({ ...profile, avatar_url: url })}
+              />
+            )}
             <div>
               <p className="font-display text-lg" style={{ color: "var(--primary)" }}>
                 {profile?.display_name || profile?.username}

@@ -8,22 +8,60 @@ import { Profile } from "@/types";
 export default function Header() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [highMatchCount, setHighMatchCount] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
-    const getProfile = async () => {
+    const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        setProfile(data);
+      if (!user) {
+        setLoading(false);
+        return;
       }
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      setProfile(data);
+
+      // マッチ通知バッジ: 5マッチ以上のユーザーがいるかチェック
+      const { data: myCells } = await supabase
+        .from("nine_cells")
+        .select("content_title")
+        .eq("user_id", user.id);
+
+      if (myCells && myCells.length > 0) {
+        const myTitles = myCells.map((c: { content_title: string }) => c.content_title.toLowerCase());
+
+        // 他ユーザーの全セルを取得
+        const { data: allCells } = await supabase
+          .from("nine_cells")
+          .select("user_id, content_title")
+          .neq("user_id", user.id);
+
+        if (allCells) {
+          // ユーザーごとにグループ化してマッチ数を計算
+          const userCellsMap = new Map<string, string[]>();
+          for (const cell of allCells) {
+            const existing = userCellsMap.get(cell.user_id) || [];
+            existing.push(cell.content_title.toLowerCase());
+            userCellsMap.set(cell.user_id, existing);
+          }
+
+          let count = 0;
+          for (const titles of userCellsMap.values()) {
+            const matchCount = myTitles.filter((t: string) => titles.includes(t)).length;
+            if (matchCount >= 5) count++;
+          }
+          setHighMatchCount(count);
+        }
+      }
+
       setLoading(false);
     };
-    getProfile();
+    init();
   }, []);
 
   const handleSignOut = async () => {
@@ -39,12 +77,30 @@ export default function Header() {
         </Link>
 
         <nav className="flex items-center gap-3">
+          {profile && (
+            <Link
+              href="/timeline"
+              className="text-xs tracking-widest uppercase relative"
+              style={{ color: "var(--primary)", opacity: 0.6 }}
+            >
+              Timeline
+            </Link>
+          )}
+
           <Link
             href="/discover"
-            className="text-xs tracking-widest uppercase"
+            className="text-xs tracking-widest uppercase relative"
             style={{ color: "var(--primary)", opacity: 0.6 }}
           >
             Discover
+            {highMatchCount > 0 && (
+              <span
+                className="absolute -top-1.5 -right-3 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
+                style={{ background: "var(--accent)", color: "#fff" }}
+              >
+                {highMatchCount}
+              </span>
+            )}
           </Link>
 
           {loading ? null : profile ? (

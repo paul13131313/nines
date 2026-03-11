@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { createClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
@@ -6,6 +7,25 @@ import { NineCell, Profile } from "@/types";
 
 interface Props {
   params: Promise<{ username: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { username } = await params;
+  const ogImageUrl = `https://nines-seven.vercel.app/api/og/${username}`;
+
+  return {
+    title: `${username}のnines`,
+    description: "好きなコンテンツ9選",
+    openGraph: {
+      title: `${username}のnines`,
+      description: "好きなコンテンツ9選",
+      images: [ogImageUrl],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [ogImageUrl],
+    },
+  };
 }
 
 export default async function UserProfilePage({ params }: Props) {
@@ -32,6 +52,7 @@ export default async function UserProfilePage({ params }: Props) {
 
   let isOwner = false;
   let myTitles: string[] = [];
+  let isFollowing = false;
 
   if (user) {
     isOwner = user.id === profile.id;
@@ -44,12 +65,33 @@ export default async function UserProfilePage({ params }: Props) {
         .eq("user_id", user.id);
 
       myTitles = (myCells || []).map((c: { content_title: string }) => c.content_title.toLowerCase());
+
+      // フォロー状態チェック
+      const { data: followData } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("following_id", profile.id)
+        .single();
+
+      isFollowing = !!followData;
     }
   }
 
   // マッチ率計算
   const theirTitles = (cells || []).map((c: NineCell) => c.content_title.toLowerCase());
   const matchCount = myTitles.filter((t) => theirTitles.includes(t)).length;
+
+  // フォロー数・フォロワー数
+  const { count: followingCount } = await supabase
+    .from("follows")
+    .select("*", { count: "exact", head: true })
+    .eq("follower_id", profile.id);
+
+  const { count: followerCount } = await supabase
+    .from("follows")
+    .select("*", { count: "exact", head: true })
+    .eq("following_id", profile.id);
 
   return (
     <>
@@ -59,7 +101,11 @@ export default async function UserProfilePage({ params }: Props) {
         cells={(cells || []) as NineCell[]}
         isOwner={isOwner}
         isLoggedIn={!!user}
+        currentUserId={user?.id || null}
         matchCount={matchCount}
+        isFollowing={isFollowing}
+        followingCount={followingCount || 0}
+        followerCount={followerCount || 0}
       />
     </>
   );
