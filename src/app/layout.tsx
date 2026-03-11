@@ -17,6 +17,16 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: "nines — 好きな9つでつながる",
   description: "好きなコンテンツを9マスに並べるキュレーションSNS",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "nines",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -26,6 +36,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
+      <head>
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <meta name="theme-color" content="#0a0a0a" />
+      </head>
       <body className={`${playfair.variable} ${notoSansJP.variable}`}>
         <div className="relative z-10">
           {children}
