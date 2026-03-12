@@ -49,11 +49,22 @@ body::before {
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: opacity 0.2s;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
 .btn-pill:hover {
   opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(38, 38, 38, 0.12);
+}
+
+.btn-pill:active {
+  opacity: 1;
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+  transition-duration: 0.06s;
 }
 
 .btn-primary {
@@ -70,6 +81,10 @@ body::before {
   background: transparent;
   color: var(--primary);
   border: 1px solid var(--primary);
+}
+
+.btn-outline:hover {
+  background: rgba(38, 38, 38, 0.05);
 }
 
 /* サークルクロップ（写真を丸く切り抜き） */
@@ -152,6 +167,41 @@ body::before {
   font-weight: 600;
   background: var(--accent);
   color: var(--text-on-primary);
+}
+
+/* 汎用インタラクションフィードバック */
+button:not(.btn-pill):not([disabled]) {
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+button:not(.btn-pill):not([disabled]):hover {
+  opacity: 0.75;
+}
+
+button:not(.btn-pill):not([disabled]):active {
+  transform: scale(0.96);
+  transition-duration: 0.06s;
+}
+
+/* タップ可能なカード */
+a.block.group .rounded-2xl {
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+a.block.group:active .rounded-2xl {
+  transform: scale(0.98);
+  transition-duration: 0.06s;
+}
+
+/* ナビリンク */
+nav a {
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+nav a:active {
+  transform: scale(0.95);
+  transition-duration: 0.06s;
 }
 
 /* スクロールバーを細く */
