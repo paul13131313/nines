@@ -28,6 +28,11 @@ interface Props {
   history: HistoryItem[];
 }
 
+interface ContentUser {
+  profile: Profile;
+  cells: NineCell[];
+}
+
 export default function ProfilePageClient({
   profile,
   cells,
@@ -44,8 +49,59 @@ export default function ProfilePageClient({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [followerCount, setFollowerCount] = useState(initialFollowerCount);
   const [followLoading, setFollowLoading] = useState(false);
+  const [expandedContent, setExpandedContent] = useState<string | null>(null);
+  const [contentUsers, setContentUsers] = useState<ContentUser[]>([]);
+  const [contentUsersLoading, setContentUsersLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // コンテンツをタップ → 同じコンテンツを登録しているユーザーを取得
+  const handleContentTap = async (contentTitle: string) => {
+    // 同じコンテンツをタップしたら閉じる
+    if (expandedContent === contentTitle) {
+      setExpandedContent(null);
+      setContentUsers([]);
+      return;
+    }
+
+    setExpandedContent(contentTitle);
+    setContentUsersLoading(true);
+
+    // 同じcontent_titleを持つセルを検索（自分を除外）
+    const { data: matchingCells } = await supabase
+      .from("nine_cells")
+      .select("user_id")
+      .ilike("content_title", contentTitle)
+      .neq("user_id", profile.id);
+
+    if (!matchingCells || matchingCells.length === 0) {
+      setContentUsers([]);
+      setContentUsersLoading(false);
+      return;
+    }
+
+    // ユニークなユーザーIDを取得
+    const userIds = [...new Set(matchingCells.map((c: { user_id: string }) => c.user_id))];
+
+    // プロフィールとセルを取得
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", userIds);
+
+    const { data: userCells } = await supabase
+      .from("nine_cells")
+      .select("*")
+      .in("user_id", userIds);
+
+    const users: ContentUser[] = (profiles || []).map((p: Profile) => ({
+      profile: p,
+      cells: (userCells || []).filter((c: NineCell) => c.user_id === p.id),
+    }));
+
+    setContentUsers(users);
+    setContentUsersLoading(false);
+  };
 
   const shareUrl = `https://nines-seven.vercel.app/${profile.username}`;
 
@@ -296,20 +352,89 @@ export default function ProfilePageClient({
             {cells
               .sort((a, b) => a.position - b.position)
               .map((cell) => (
-                <div
-                  key={cell.id}
-                  className="flex items-center gap-2 py-1.5 px-3 rounded-lg"
-                  style={{ background: "rgba(255,255,255,0.4)" }}
-                >
-                  <span className="font-display text-sm" style={{ color: "var(--primary)", opacity: 0.25 }}>
-                    #{cell.position + 1}
-                  </span>
-                  <span className="text-sm" style={{ color: "var(--primary)" }}>
-                    {cell.content_title}
-                  </span>
-                  <span className="text-xs ml-auto" style={{ color: "var(--primary)", opacity: 0.3 }}>
-                    {cell.content_type}
-                  </span>
+                <div key={cell.id}>
+                  <button
+                    onClick={() => handleContentTap(cell.content_title)}
+                    className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-left"
+                    style={{
+                      background: expandedContent === cell.content_title
+                        ? "rgba(255,255,255,0.7)"
+                        : "rgba(255,255,255,0.4)",
+                    }}
+                  >
+                    <span className="font-display text-sm" style={{ color: "var(--primary)", opacity: 0.25 }}>
+                      #{cell.position + 1}
+                    </span>
+                    <span className="text-sm truncate" style={{ color: "var(--primary)" }}>
+                      {cell.content_title}
+                    </span>
+                    <span className="text-xs ml-auto flex-shrink-0" style={{ color: "var(--primary)", opacity: 0.3 }}>
+                      {cell.content_type}
+                    </span>
+                    <span
+                      className="text-[10px] flex-shrink-0 transition-transform"
+                      style={{
+                        color: "var(--primary)",
+                        opacity: 0.3,
+                        transform: expandedContent === cell.content_title ? "rotate(180deg)" : "rotate(0deg)",
+                      }}
+                    >
+                      ▼
+                    </span>
+                  </button>
+
+                  {/* 同じコンテンツのユーザー展開 */}
+                  {expandedContent === cell.content_title && (
+                    <div
+                      className="ml-3 mt-1 mb-2 pl-3 py-2"
+                      style={{ borderLeft: "2px solid var(--border)" }}
+                    >
+                      {contentUsersLoading ? (
+                        <p className="text-xs py-2" style={{ color: "var(--primary)", opacity: 0.35 }}>
+                          ...
+                        </p>
+                      ) : contentUsers.length === 0 ? (
+                        <p className="text-xs py-2" style={{ color: "var(--primary)", opacity: 0.35 }}>
+                          他にこのコンテンツを登録しているユーザーはいません
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-[11px] mb-1" style={{ color: "var(--primary)", opacity: 0.4 }}>
+                            {contentUsers.length}人が同じコンテンツを登録
+                          </p>
+                          {contentUsers.map(({ profile: p, cells: userCells }) => (
+                            <Link
+                              key={p.id}
+                              href={`/${p.username}`}
+                              className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg group"
+                              style={{ background: "rgba(255,255,255,0.3)" }}
+                            >
+                              <div className="circle-crop w-7 h-7 flex-shrink-0" style={{ background: "var(--primary)" }}>
+                                {p.avatar_url ? (
+                                  <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-[10px]" style={{ color: "var(--text-on-primary)" }}>
+                                    {p.username[0].toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium truncate" style={{ color: "var(--primary)" }}>
+                                  {p.display_name || p.username}
+                                </p>
+                                <p className="text-[10px]" style={{ color: "var(--primary)", opacity: 0.35 }}>
+                                  {userCells.length}コンテンツ登録中
+                                </p>
+                              </div>
+                              <span className="text-[10px]" style={{ color: "var(--primary)", opacity: 0.3 }}>
+                                →
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
           </div>
