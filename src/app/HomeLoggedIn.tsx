@@ -97,10 +97,9 @@ export default function HomeLoggedIn({
             onClick={() => setActiveTab("following")}
             className="flex-1 py-2.5 rounded-full text-xs font-medium tracking-wide text-center transition-all"
             style={{
-              background: activeTab === "following" ? "var(--primary)" : "transparent",
-              color: activeTab === "following" ? "var(--text-on-primary)" : "var(--primary)",
-              border: activeTab === "following" ? "none" : "1px solid var(--border)",
-              opacity: activeTab === "following" ? 1 : 0.5,
+              background: activeTab === "following" ? "rgba(38, 38, 38, 0.12)" : "transparent",
+              color: "var(--primary)",
+              opacity: activeTab === "following" ? 1 : 0.35,
             }}
           >
             Following ({followingUsers.length})
@@ -109,10 +108,9 @@ export default function HomeLoggedIn({
             onClick={() => setActiveTab("everyone")}
             className="flex-1 py-2.5 rounded-full text-xs font-medium tracking-wide text-center transition-all"
             style={{
-              background: activeTab === "everyone" ? "var(--primary)" : "transparent",
-              color: activeTab === "everyone" ? "var(--text-on-primary)" : "var(--primary)",
-              border: activeTab === "everyone" ? "none" : "1px solid var(--border)",
-              opacity: activeTab === "everyone" ? 1 : 0.5,
+              background: activeTab === "everyone" ? "rgba(38, 38, 38, 0.12)" : "transparent",
+              color: "var(--primary)",
+              opacity: activeTab === "everyone" ? 1 : 0.35,
             }}
           >
             Everyone ({everyoneUsers.length})

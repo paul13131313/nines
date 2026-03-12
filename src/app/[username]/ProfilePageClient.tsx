@@ -148,6 +148,13 @@ export default function ProfilePageClient({
       if (!error) {
         setIsFollowing(false);
         setFollowerCount((c) => c - 1);
+        // 通知も削除
+        await supabase
+          .from("notifications")
+          .delete()
+          .eq("user_id", profile.id)
+          .eq("actor_id", currentUserId)
+          .eq("type", "follow");
       }
     } else {
       const { error } = await supabase
@@ -160,6 +167,12 @@ export default function ProfilePageClient({
       if (!error) {
         setIsFollowing(true);
         setFollowerCount((c) => c + 1);
+        // フォロー通知を作成
+        await supabase.from("notifications").insert({
+          user_id: profile.id,
+          actor_id: currentUserId,
+          type: "follow",
+        });
       }
     }
 
@@ -328,7 +341,68 @@ export default function ProfilePageClient({
       </div>
 
       {/* 9マスグリッド */}
-      <NineGrid cells={cells} size="lg" />
+      <NineGrid
+        cells={cells}
+        size="lg"
+        onCellClick={(pos) => {
+          const cell = cells.find((c) => c.position === pos);
+          if (cell) handleContentTap(cell.content_title);
+        }}
+        selectedPosition={cells.find((c) => c.content_title === expandedContent)?.position ?? null}
+      />
+
+      {/* グリッド下の展開エリア */}
+      {expandedContent && (
+        <div
+          className="max-w-[360px] mx-auto mt-3 px-3 py-3 rounded-xl"
+          style={{ background: "rgba(255,255,255,0.5)" }}
+        >
+          <p className="text-xs font-medium mb-2 truncate" style={{ color: "var(--primary)" }}>
+            「{expandedContent}」を登録しているユーザー
+          </p>
+          {contentUsersLoading ? (
+            <p className="text-xs py-2" style={{ color: "var(--primary)", opacity: 0.35 }}>
+              ...
+            </p>
+          ) : contentUsers.length === 0 ? (
+            <p className="text-xs py-2" style={{ color: "var(--primary)", opacity: 0.35 }}>
+              他にこのコンテンツを登録しているユーザーはいません
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {contentUsers.map(({ profile: p, cells: userCells }) => (
+                <Link
+                  key={p.id}
+                  href={`/${p.username}`}
+                  className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg group"
+                  style={{ background: "rgba(255,255,255,0.4)" }}
+                >
+                  <div className="circle-crop w-7 h-7 flex-shrink-0" style={{ background: "var(--primary)" }}>
+                    {p.avatar_url ? (
+                      <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px]" style={{ color: "var(--text-on-primary)" }}>
+                        {p.username[0].toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium truncate" style={{ color: "var(--primary)" }}>
+                      {p.display_name || p.username}
+                    </p>
+                    <p className="text-[10px]" style={{ color: "var(--primary)", opacity: 0.35 }}>
+                      {userCells.length}コンテンツ登録中
+                    </p>
+                  </div>
+                  <span className="text-[10px]" style={{ color: "var(--primary)", opacity: 0.3 }}>
+                    →
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* シェアボタン */}
       {cells.length > 0 && (

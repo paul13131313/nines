@@ -7,9 +7,10 @@ interface NineGridProps {
   onCellClick?: (position: number) => void;
   editable?: boolean;
   size?: "sm" | "md" | "lg";
+  selectedPosition?: number | null;
 }
 
-export default function NineGrid({ cells, onCellClick, editable = false, size = "lg" }: NineGridProps) {
+export default function NineGrid({ cells, onCellClick, editable = false, size = "lg", selectedPosition = null }: NineGridProps) {
   const cellMap = new Map(cells.map((c) => [c.position, c]));
 
   const sizeClass = {
@@ -34,8 +35,13 @@ export default function NineGrid({ cells, onCellClick, editable = false, size = 
             className={`nine-cell ${editable ? "cursor-pointer" : ""}`}
             onClick={() => onCellClick?.(i)}
             disabled={!editable && !onCellClick}
+            aria-label={cell?.content_title || `Cell ${i + 1}`}
             style={{
-              border: editable && !cell ? "2px dashed var(--border)" : "none",
+              border: editable && !cell
+                ? "2px dashed var(--border)"
+                : selectedPosition === i
+                  ? "2px solid var(--accent)"
+                  : "none",
             }}
           >
             {cell?.thumbnail_url ? (
