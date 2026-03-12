@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import NineGrid from "@/components/NineGrid";
@@ -16,13 +19,17 @@ export default function HomeLoggedIn({
   followingUsers,
   everyoneUsers,
 }: HomeLoggedInProps) {
+  const [activeTab, setActiveTab] = useState<"following" | "everyone">(
+    followingUsers.length > 0 ? "following" : "everyone"
+  );
+
   return (
     <>
       <Header />
       <main className="max-w-lg mx-auto px-4 pb-20 pt-6">
         {/* 自分のnines（コンパクト版） */}
         {myProfile && (
-          <section className="mb-8">
+          <section className="mb-6">
             <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.5)" }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
@@ -84,12 +91,37 @@ export default function HomeLoggedIn({
           </section>
         )}
 
-        {/* フォロー中のnines */}
-        {followingUsers.length > 0 && (
-          <section className="mb-8">
-            <h2 className="font-display text-xl mb-4" style={{ color: "var(--primary)" }}>
-              Following
-            </h2>
+        {/* タブ */}
+        <div className="flex gap-1 mb-5">
+          <button
+            onClick={() => setActiveTab("following")}
+            className="flex-1 py-2.5 rounded-full text-xs font-medium tracking-wide text-center transition-all"
+            style={{
+              background: activeTab === "following" ? "var(--primary)" : "transparent",
+              color: activeTab === "following" ? "var(--text-on-primary)" : "var(--primary)",
+              border: activeTab === "following" ? "none" : "1px solid var(--border)",
+              opacity: activeTab === "following" ? 1 : 0.5,
+            }}
+          >
+            Following ({followingUsers.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("everyone")}
+            className="flex-1 py-2.5 rounded-full text-xs font-medium tracking-wide text-center transition-all"
+            style={{
+              background: activeTab === "everyone" ? "var(--primary)" : "transparent",
+              color: activeTab === "everyone" ? "var(--text-on-primary)" : "var(--primary)",
+              border: activeTab === "everyone" ? "none" : "1px solid var(--border)",
+              opacity: activeTab === "everyone" ? 1 : 0.5,
+            }}
+          >
+            Everyone ({everyoneUsers.length})
+          </button>
+        </div>
+
+        {/* Following タブ */}
+        {activeTab === "following" && (
+          followingUsers.length > 0 ? (
             <div className="space-y-3">
               {followingUsers.map(({ profile, cells, matchCount }) => (
                 <Link
@@ -136,24 +168,21 @@ export default function HomeLoggedIn({
                 </Link>
               ))}
             </div>
-          </section>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-sm mb-1" style={{ color: "var(--primary)", opacity: 0.35 }}>
+                まだフォローしているユーザーがいません
+              </p>
+              <p className="text-xs" style={{ color: "var(--primary)", opacity: 0.25 }}>
+                Everyoneタブからユーザーを見つけよう
+              </p>
+            </div>
+          )
         )}
 
-        {/* みんなのnines */}
-        {everyoneUsers.length > 0 && (
-          <section>
-            <div className="flex items-baseline justify-between mb-4">
-              <h2 className="font-display text-xl" style={{ color: "var(--primary)" }}>
-                Everyone
-              </h2>
-              <Link
-                href="/discover"
-                className="text-xs tracking-widest uppercase"
-                style={{ color: "var(--primary)", opacity: 0.4 }}
-              >
-                View All →
-              </Link>
-            </div>
+        {/* Everyone タブ */}
+        {activeTab === "everyone" && (
+          everyoneUsers.length > 0 ? (
             <div className="grid grid-cols-2 gap-3">
               {everyoneUsers.map(({ profile, cells, matchCount }) => (
                 <Link
@@ -190,19 +219,13 @@ export default function HomeLoggedIn({
                 </Link>
               ))}
             </div>
-          </section>
-        )}
-
-        {/* フォローもなく、他ユーザーもいない場合 */}
-        {followingUsers.length === 0 && everyoneUsers.length === 0 && (
-          <section className="text-center py-8">
-            <p className="text-sm mb-4" style={{ color: "var(--primary)", opacity: 0.4 }}>
-              まだ他のユーザーがいません
-            </p>
-            <Link href="/discover" className="btn-pill btn-primary text-xs py-2 px-5">
-              ユーザーを探す
-            </Link>
-          </section>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-sm" style={{ color: "var(--primary)", opacity: 0.35 }}>
+                まだ他のユーザーがいません
+              </p>
+            </div>
+          )
         )}
       </main>
     </>

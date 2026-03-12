@@ -85,7 +85,7 @@ export default async function Home() {
       .select("*")
       .not("id", "in", `(${excludeIds.join(",")})`)
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(50);
 
     let everyoneUsers: { profile: Profile; cells: NineCell[]; matchCount: number }[] = [];
 
@@ -160,8 +160,8 @@ export default async function Home() {
             <Link href="/auth" className="btn-pill btn-primary">
               はじめる
             </Link>
-            <Link href="/discover" className="btn-pill btn-outline">
-              みんなのnines
+            <Link href="/auth" className="btn-pill btn-outline">
+              みんなのninesを見る
             </Link>
           </div>
         </section>
@@ -174,11 +174,11 @@ export default async function Home() {
                 Recent
               </h2>
               <Link
-                href="/discover"
+                href="/auth"
                 className="text-xs tracking-widest uppercase"
                 style={{ color: "var(--primary)", opacity: 0.4 }}
               >
-                View All →
+                Log In →
               </Link>
             </div>
 
