@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { Profile } from "@/types";
 
@@ -64,7 +64,24 @@ export default function Header() {
     init();
   }, []);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // メニュー外クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
   const handleSignOut = async () => {
+    setMenuOpen(false);
     await supabase.auth.signOut();
     window.location.href = "/";
   };
@@ -77,16 +94,6 @@ export default function Header() {
         </Link>
 
         <nav className="flex items-center gap-3">
-          {profile && (
-            <Link
-              href="/"
-              className="text-xs tracking-widest uppercase relative"
-              style={{ color: "var(--primary)", opacity: 0.6 }}
-            >
-              Home
-            </Link>
-          )}
-
           <Link
             href="/discover"
             className="text-xs tracking-widest uppercase relative"
@@ -104,10 +111,10 @@ export default function Header() {
           </Link>
 
           {loading ? null : profile ? (
-            <div className="flex items-center gap-2">
-              <Link
-                href={`/${profile.username}`}
-                className="flex items-center gap-1.5"
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center"
               >
                 <div className="circle-crop w-7 h-7" style={{ background: "var(--primary)" }}>
                   {profile.avatar_url ? (
@@ -118,14 +125,39 @@ export default function Header() {
                     </div>
                   )}
                 </div>
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-xs"
-                style={{ color: "var(--primary)", opacity: 0.4 }}
-              >
-                Out
               </button>
+
+              {menuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 rounded-xl py-1 min-w-[140px] shadow-lg"
+                  style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+                >
+                  <Link
+                    href={`/${profile.username}`}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2.5 text-xs tracking-wide"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    My Page
+                  </Link>
+                  <Link
+                    href="/edit"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2.5 text-xs tracking-wide"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    Edit Nines
+                  </Link>
+                  <div style={{ borderTop: "1px solid var(--border)" }} />
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-4 py-2.5 text-xs tracking-wide"
+                    style={{ color: "var(--primary)", opacity: 0.5 }}
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <Link href="/auth" className="btn-pill btn-primary text-xs py-1.5 px-4">
